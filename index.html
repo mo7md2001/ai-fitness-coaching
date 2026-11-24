@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FitAI — Your AI Fitness Coach</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--main:#6c5ce7;--dark:#1e1b2e;--bg:#f4f3fb;--green:#00b894;--orange:#e17055;--muted:#777}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--dark);max-width:520px;margin:0 auto;min-height:100vh}
+header{background:linear-gradient(135deg,#6c5ce7,#00b894);color:#fff;padding:22px 18px;text-align:center}
+header h1{font-size:26px}header p{opacity:.9;font-size:14px;margin-top:4px}
+nav{display:flex;background:#fff;border-bottom:1px solid #e5e0f5;position:sticky;top:0;z-index:5}
+nav button{flex:1;padding:12px 2px;border:0;background:none;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent}
+nav button.active{color:var(--main);border-bottom-color:var(--main)}
+section{padding:16px;display:none}section.active{display:block}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+label{display:block;font-size:13px;font-weight:700;margin:10px 0 4px}
+input,select{width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:15px;font-family:inherit}
+.btn{display:block;width:100%;padding:14px;border:0;border-radius:12px;background:var(--main);color:#fff;font-size:16px;font-weight:800;cursor:pointer;margin-top:12px}
+.btn.green{background:var(--green)}
+.chip{display:inline-block;padding:8px 14px;border:1.5px solid #ddd;border-radius:20px;margin:4px 4px 4px 0;cursor:pointer;font-size:14px;background:#fff}
+.chip.sel{background:var(--main);color:#fff;border-color:var(--main)}
+.stat{display:flex;gap:10px}.stat div{flex:1;background:#f4f3fb;border-radius:12px;padding:12px;text-align:center}
+.stat b{font-size:22px;display:block}.stat span{font-size:12px;color:var(--muted)}
+.bar-row{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:13px}
+.bar-row span:first-child{width:90px}.bar{flex:1;height:14px;background:#eee;border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--main);border-radius:8px}
+.ex{display:flex;gap:12px;padding:12px 0;border-top:1px solid #eee;align-items:center}
+.ex .ic{font-size:34px;width:52px;height:52px;background:#f4f3fb;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.ex h4{font-size:15px}.ex p{font-size:13px;color:var(--muted);line-height:1.5}
+.chat{height:260px;overflow-y:auto;background:#f8f7ff;border-radius:12px;padding:12px;margin-bottom:10px}
+.msg{max-width:85%;padding:10px 12px;border-radius:14px;margin-bottom:8px;font-size:14px;line-height:1.6}
+.msg.ai{background:#fff;border:1px solid #e5e0f5}
+.msg.me{background:var(--main);color:#fff;margin-left:auto}
+.chat-row{display:flex;gap:8px}.chat-row input{flex:1}
+.chat-row button{padding:12px 16px;border:0;border-radius:10px;background:var(--main);color:#fff;font-weight:700;cursor:pointer}
+.streak{font-size:40px;text-align:center}
+small{color:var(--muted)}
+.ar{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><h1>💪 FitAI</h1><p>Your AI coach — plans, workouts & daily check-ins <span class="ar">(مدربك الذكي)</span></p></header>
+<nav>
+<button class="active" onclick="tab('onboard',this)">Onboarding</button>
+<button onclick="tab('plan',this)">My Plan</button>
+<button onclick="tab('workout',this)">Workout</button>
+<button onclick="tab('track',this)">Progress</button>
+<button onclick="tab('coach',this)">AI Coach</button>
+</nav>
+
+<section id="onboard" class="active">
+<div class="card"><h2>Tell your coach about you</h2><p><small>30 seconds — your plan updates instantly.</small></p>
+<label>Age</label><input id="age" type="number" value="28" min="14" max="80">
+<label>Weight (kg)</label><input id="weight" type="number" value="82" min="35" max="200">
+<label>Height (cm)</label><input id="height" type="number" value="178" min="130" max="220">
+<label>Gender</label><select id="gender"><option value="m">Male</option><option value="f">Female</option></select>
+<label>Your goal</label><div id="goals">
+<span class="chip sel" onclick="pickGoal(this,'Lose fat')">🔥 Lose fat</span>
+<span class="chip" onclick="pickGoal(this,'Build muscle')">🏋️ Build muscle</span>
+<span class="chip" onclick="pickGoal(this,'Stay fit')">⚡ Stay fit</span>
+</div>
+<label>Activity level</label><select id="activity"><option value="1.35">Light — desk job, 1–2 workouts/week</option><option value="1.55" selected>Moderate — 3–4 workouts/week</option><option value="1.75">Active — 5–6 workouts/week</option></select>
+<button class="btn" onclick="buildPlan()">Build my plan →</button>
+</div>
+<div class="card"><h3>What you get</h3><p style="line-height:1.9;font-size:14px">✅ Personal calorie &amp; macro plan<br>✅ Weekly training program<br>✅ Daily check-ins &amp; streaks<br>✅ AI coach that answers in seconds</p></div>
+</section>
+
+<section id="plan">
+<div class="card"><h2>Your plan <span id="planGoal"></span></h2><p id="planMeta"><small>Fill in onboarding first, then come back here.</small></p></div>
+<div class="card"><h3>🍽️ Daily calories &amp; macros</h3>
+<div class="stat"><div><b id="cal">—</b><span>Calories / day</span></div><div><b id="prot">—</b><span>Protein (g)</span></div><div><b id="carb">—</b><span>Carbs (g)</span></div><div><b id="fat">—</b><span>Fat (g)</span></div></div>
+<p id="macroNote" style="font-size:14px;line-height:1.8;margin-top:10px"></p></div>
+<div class="card"><h3>🗓️ Your week</h3>
+<div class="bar-row"><span>Mon</span><div class="bar"><i style="width:100%;background:var(--main)"></i></div><span>Upper body</span></div>
+<div class="bar-row"><span>Tue</span><div class="bar"><i style="width:100%;background:var(--green)"></i></div><span>Cardio 30 min</span></div>
+<div class="bar-row"><span>Wed</span><div class="bar"><i style="width:100%;background:var(--main)"></i></div><span>Lower body</span></div>
+<div class="bar-row"><span>Thu</span><div class="bar"><i style="width:40%;background:#ddd"></i></div><span>Rest / walk</span></div>
+<div class="bar-row"><span>Fri</span><div class="bar"><i style="width:100%;background:var(--main)"></i></div><span>Full body</span></div>
+<div class="bar-row"><span>Sat</span><div class="bar"><i style="width:100%;background:var(--orange)"></i></div><span>HIIT 20 min</span></div>
+<div class="bar-row"><span>Sun</span><div class="bar"><i style="width:40%;background:#ddd"></i></div><span>Rest</span></div>
+</div>
+</section>
+
+<section id="workout">
+<div class="card"><h2>Today — Upper Body 💪</h2><p><small>45 min • 6 exercises • No equipment needed for the home version</small></p></div>
+<div class="card" id="exList"></div>
+<button class="btn green" onclick="finishWorkout()">✓ Finish workout</button>
+<p id="workoutDone" style="text-align:center;margin-top:10px;font-weight:700;color:var(--green)"></p>
+</section>
+
+<section id="track">
+<div class="card center"><div class="streak">🔥</div><h2 id="streakNum">12-day streak</h2><p><small>Check in every day to keep it alive</small></p>
+<button class="btn" onclick="checkIn()">Daily check-in — I trained today</button>
+<p id="checkMsg" style="margin-top:8px;font-weight:700;color:var(--green)"></p></div>
+<div class="card"><h3>📉 Weight — last 6 weeks</h3>
+<div class="bar-row"><span>Week 1</span><div class="bar"><i style="width:100%"></i></div><span>82.0 kg</span></div>
+<div class="bar-row"><span>Week 2</span><div class="bar"><i style="width:97%"></i></div><span>81.4 kg</span></div>
+<div class="bar-row"><span>Week 3</span><div class="bar"><i style="width:95%"></i></div><span>80.9 kg</span></div>
+<div class="bar-row"><span>Week 4</span><div class="bar"><i style="width:93%"></i></div><span>80.2 kg</span></div>
+<div class="bar-row"><span>Week 5</span><div class="bar"><i style="width:91%"></i></div><span>79.6 kg</span></div>
+<div class="bar-row"><span>Week 6</span><div class="bar"><i style="width:89%;background:var(--green)"></i></div><span>79.1 kg</span></div>
+<p style="margin-top:8px"><b style="color:var(--green)">−2.9 kg in 6 weeks</b> <small>— on track for your goal</small></p></div>
+<div class="card"><h3>🎯 This week's targets</h3>
+<div class="bar-row"><span>Workouts</span><div class="bar"><i style="width:75%;background:var(--green)"></i></div><span>3 / 4</span></div>
+<div class="bar-row"><span>Protein</span><div class="bar"><i style="width:85%"></i></div><span>85%</span></div>
+<div class="bar-row"><span>Water</span><div class="bar"><i style="width:60%;background:var(--orange)"></i></div><span>6 / 10 glasses</span></div></div>
+</section>
+
+<section id="coach">
+<div class="card"><h2>🤖 Ask your AI coach</h2><p><small>Training, food, recovery — answers in seconds.</small></p></div>
+<div class="chat" id="chat">
+<div class="msg ai">Hi Mohamed! 👋 I'm your FitAI coach. You lost 2.9 kg in 6 weeks — great work. Ask me anything: workouts, meals, or why you're stuck.</div>
+</div>
+<div class="chat-row"><input id="chatIn" placeholder="Ask… e.g. what should I eat after training?" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">Send</button></div>
+<div style="margin-top:10px"><span class="chip" onclick="quickAsk('What should I eat after training?')">🍗 After training?</span><span class="chip" onclick="quickAsk('I feel tired today, should I train?')">😴 Tired today?</span><span class="chip" onclick="quickAsk('How much protein do I need?')">🥚 Protein?</span></div>
+</section>
+
+<script>
+let goal='Lose fat', streak=12;
+const EXERCISES=[
+ ['🏋️','Push-ups','3 sets × 12 reps — chest & triceps. Keep your body straight, lower slowly.'],
+ ['💪','Dumbbell rows','3 sets × 12 each arm — back & biceps. Pull the elbow past your ribs.'],
+ ['🧍','Shoulder press','3 sets × 10 reps — shoulders. Press up, don\'t arch your lower back.'],
+ ['🦵','Bodyweight squats','3 sets × 15 reps — legs & glutes. Knees track over your toes.'],
+ ['🧱','Plank','3 sets × 45 seconds — core. Squeeze your glutes, breathe steadily.'],
+ ['🤸','Mountain climbers','3 sets × 30 seconds — cardio finisher. Fast knees, flat back.']
+];
+document.getElementById('exList').innerHTML=EXERCISES.map(e=>`<div class="ex"><div class="ic">${e[0]}</div><div><h4>${e[1]}</h4><p>${e[2]}</p></div></div>`).join('');
+function tab(id,btn){document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+function pickGoal(el,g){goal=g;document.querySelectorAll('#goals .chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel')}
+function buildPlan(){
+ const age=+document.getElementById('age').value, w=+document.getElementById('weight').value, h=+document.getElementById('height').value;
+ const male=document.getElementById('gender').value==='m', act=+document.getElementById('activity').value;
+ let bmr=male?10*w+6.25*h-5*age+5:10*w+6.25*h-5*age-161;
+ let cal=Math.round(bmr*act);
+ if(goal==='Lose fat')cal-=400; if(goal==='Build muscle')cal+=300;
+ const prot=Math.round(w*(goal==='Build muscle'?2:1.8)), fat=Math.round(cal*0.25/9), carb=Math.round((cal-prot*4-fat*9)/4);
+ document.getElementById('cal').textContent=cal.toLocaleString();
+ document.getElementById('prot').textContent=prot; document.getElementById('carb').textContent=carb; document.getElementById('fat').textContent=fat;
+ document.getElementById('planGoal').textContent='— '+goal;
+ document.getElementById('planMeta').innerHTML='<small>BMR '+Math.round(bmr)+' kcal • Activity ×'+act+' • Age '+age+', '+w+' kg, '+h+' cm</small>';
+ document.getElementById('macroNote').textContent=goal==='Lose fat'?'A 400 kcal deficit, high protein to keep muscle while you lose fat. Aim for 2 litres of water a day.':goal==='Build muscle'?'A 300 kcal surplus with 2 g protein per kg — eat in a small surplus and train hard.':'A balanced maintenance plan — enough fuel to train, not so much you gain fat.';
+ tab('plan',document.querySelectorAll('nav button')[1]);}
+function finishWorkout(){document.getElementById('workoutDone').textContent='🎉 Workout complete! +1 to your streak. Great job!'}
+function checkIn(){streak++;document.getElementById('streakNum').textContent=streak+'-day streak';document.getElementById('checkMsg').textContent='✓ Checked in! See you tomorrow.'}
+function reply(q){
+ q=q.toLowerCase();
+ if(q.includes('protein'))return 'You need about '+(document.getElementById('prot').textContent!=='—'?document.getElementById('prot').textContent:'150')+' g of protein a day. Easy sources: eggs, chicken, Greek yoghurt, lentils. Split it across 3–4 meals — your body uses it better that way.';
+ if(q.includes('tired')||q.includes('sore'))return 'If you\'re tired, do a light day: 20 minutes of walking + stretching instead of skipping completely. If you\'re sore in one muscle, train a different one. Rest is part of the plan, not a failure.';
+ if(q.includes('eat')||q.includes('after')||q.includes('meal'))return 'After training: protein + carbs within 2 hours. Example: grilled chicken + rice + salad, or eggs + toast + fruit. Drink water first — you\'re usually more dehydrated than hungry.';
+ if(q.includes('weight')||q.includes('stuck')||q.includes('plateau'))return 'A plateau is normal after 6 weeks. Check: are you tracking every snack? Add 10 minutes of walking a day and keep protein high for 2 weeks — the scale usually moves again.';
+ if(q.includes('water'))return 'Aim for 2–2.5 litres a day. Keep a bottle at your desk — most people who think they\'re hungry are just thirsty.';
+ return 'Good question! Based on your plan ('+goal.toLowerCase()+'), focus on consistency this week: hit your workouts, hit your protein, and sleep 7–8 hours. Small wins every day beat one perfect day. Want a meal idea or a workout tweak?';}
+function sendChat(){const inp=document.getElementById('chatIn');const t=inp.value.trim();if(!t)return;addMsg(t,'me');inp.value='';setTimeout(()=>addMsg(reply(t),'ai'),500)}
+function quickAsk(t){addMsg(t,'me');setTimeout(()=>addMsg(reply(t),'ai'),500)}
+function addMsg(t,cls){const c=document.getElementById('chat');const d=document.createElement('div');d.className='msg '+cls;d.textContent=t;c.appendChild(d);c.scrollTop=c.scrollHeight}
+buildPlanSilent();
+function buildPlanSilent(){const w=82,h=178,age=28;let bmr=10*w+6.25*h-5*age+5;let cal=Math.round(bmr*1.55)-400;const prot=Math.round(w*1.8),fat=Math.round(cal*0.25/9),carb=Math.round((cal-prot*4-fat*9)/4);
+ document.getElementById('cal').textContent=cal.toLocaleString();document.getElementById('prot').textContent=prot;document.getElementById('carb').textContent=carb;document.getElementById('fat').textContent=fat;
+ document.getElementById('planGoal').textContent='— Lose fat';document.getElementById('planMeta').innerHTML='<small>BMR '+Math.round(bmr)+' kcal • Activity ×1.55 • Age 28, 82 kg, 178 cm</small>';
+ document.getElementById('macroNote').textContent='A 400 kcal deficit, high protein to keep muscle while you lose fat. Aim for 2 litres of water a day.';}
+</script>
+</body>
+</html>
